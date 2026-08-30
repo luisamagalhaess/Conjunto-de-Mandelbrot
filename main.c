@@ -11,6 +11,29 @@ void converterPixelParaComplexo(int x, int y, int largura, int altura, double *c
     *c_imag = IMAG_MIN + ((double)y / (altura - 1)) * (IMAG_MAX - IMAG_MIN);
 }
 
+int calcularIteracoes(int x, int y, int largura, int altura, int max_iteracoes) {
+    double c_real;
+    double c_imag;
+    converterPixelParaComplexo(x, y, largura, altura, &c_real, &c_imag);
+
+    double z_real = 0.0;
+    double z_imag = 0.0;
+    int iteracao = 0;
+
+    while (z_real * z_real + z_imag * z_imag <= 4.0 && iteracao < max_iteracoes) {
+        double novo_real = z_real * z_real - z_imag * z_imag + c_real;
+        
+        double novo_imag = 2.0 * z_real * z_imag + c_imag;
+
+        z_real = novo_real;
+        z_imag = novo_imag;
+
+        iteracao++;
+    }
+
+    return iteracao;
+}
+
 int main(int argc, char *argv[]) {
 
     if (argc != 5) {
