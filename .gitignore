@@ -1,4 +1,5 @@
 mandelbrot
 output/
 mandelbrot_lfm3_serial.pgm
+mandelbrot_lfm3_openmp.pgm
 times.txt
