@@ -133,6 +133,26 @@ int main(int argc, char *argv[]) {
     }
     fprintf(arquivo_tempo, "Serial: %.6f\n", tempo_serial);
     fclose(arquivo_tempo);
+    
+    clock_gettime(CLOCK_MONOTONIC, &inicio);
+    mandelbrotOpenMP(imagem, largura, altura, max_iteracoes, num_threads);
+    clock_gettime(CLOCK_MONOTONIC, &fim);
+    double tempo_openmp = calcularTempo(inicio, fim);
+    
+    if (!salvarImagem("mandelbrot_lfm3_openmp.pgm", imagem, largura, altura)) {
+        fprintf(stderr, "Erro: nao foi possivel criar o arquivo OpenMP!\n");
+        free(imagem);
+        return 1;
+    }
+    
+    arquivo_tempo = fopen("times.txt", "a");
+    if (arquivo_tempo == NULL) {
+        fprintf(stderr, "Erro: nao foi possivel abrir times.txt!\n");
+        free(imagem);
+        return 1;
+    }
+    fprintf(arquivo_tempo, "OpenMP: %.6f\n", tempo_openmp);
+    fclose(arquivo_tempo);
     free(imagem);
 
     return 0;
