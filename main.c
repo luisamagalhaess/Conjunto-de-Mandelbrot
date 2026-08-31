@@ -34,6 +34,14 @@ int calcularIteracoes(int x, int y, int largura, int altura, int max_iteracoes) 
     return iteracao;
 }
 
+void mandelbrotSerial( int *imagem, int largura, int altura, int max_iteracoes) {
+    for (int y = 0; y < altura; y++) {
+        for (int x = 0; x < largura; x++) {
+            imagem[y * largura + x] = calcularIteracoes(x, y, largura, altura, max_iteracoes);
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
 
     if (argc != 5) {
@@ -50,6 +58,16 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Erro: todos os argumentos devem ser inteiros positivos!\n");
         return 1;
     }
+
+    int total_pixels = largura * altura;
+    int *imagem = malloc(total_pixels * sizeof(int));
+    if (imagem == NULL) {
+        fprintf(stderr, "Erro: falha na alocacao de memoria!\n");
+        return 1;
+    }
+
+    mandelbrotSerial(imagem, largura, altura, max_iteracoes);
+    free(imagem);
 
     return 0;
 }
