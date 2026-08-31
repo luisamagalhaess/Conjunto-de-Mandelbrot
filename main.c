@@ -1,5 +1,8 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define REAL_MIN -2.0
 #define REAL_MAX 1.0
@@ -64,6 +67,12 @@ int salvarImagem(const char *nome_arquivo, int *imagem, int largura, int altura)
     return 1;
 }
 
+double calcularTempo(struct timespec inicio, struct timespec fim) {
+    double segundos = fim.tv_sec - inicio.tv_sec;
+    double nanossegundos = (fim.tv_nsec - inicio.tv_nsec) / 1000000000.0;
+    return segundos + nanossegundos;
+}
+
 int main(int argc, char *argv[]) {
 
     if (argc != 5) {
@@ -88,12 +97,29 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    struct timespec inicio;
+    struct timespec fim;
+    clock_gettime(CLOCK_MONOTONIC, &inicio);
+
     mandelbrotSerial(imagem, largura, altura, max_iteracoes);
+
+    clock_gettime(CLOCK_MONOTONIC, &fim);
+    double tempo_serial = calcularTempo(inicio, fim);
+    
     if (!salvarImagem("mandelbrot_lfm3_serial.pgm", imagem, largura, altura)) {
         fprintf(stderr, "Erro: nao foi possivel criar o arquivo de saida!\n");
         free(imagem);
         return 1;
     }
+
+    FILE *arquivo_tempo = fopen("times.txt", "w");
+    if (arquivo_tempo == NULL) {
+        fprintf(stderr, "Erro: nao foi possivel criar times.txt!\n");
+        free(imagem);
+        return 1;
+    }
+    fprintf(arquivo_tempo, "Serial: %.6f\n", tempo_serial);
+    fclose(arquivo_tempo);
     free(imagem);
 
     return 0;
