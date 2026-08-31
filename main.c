@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <omp.h>
 
 #define REAL_MIN -2.0
 #define REAL_MAX 1.0
@@ -41,6 +42,18 @@ void mandelbrotSerial( int *imagem, int largura, int altura, int max_iteracoes) 
     for (int y = 0; y < altura; y++) {
         for (int x = 0; x < largura; x++) {
             int iteracoes = calcularIteracoes( x, y, largura, altura, max_iteracoes);
+            imagem[y * largura + x] = (iteracoes * 255) / max_iteracoes;
+        }
+    }
+}
+
+void mandelbrotOpenMP(int *imagem, int largura, int altura, int max_iteracoes, int num_threads) {
+    #pragma omp parallel for num_threads(num_threads)
+
+    for (int y = 0; y < altura; y++) {
+        for (int x = 0; x < largura; x++) {
+            int iteracoes = calcularIteracoes(x, y, largura, altura, max_iteracoes);
+
             imagem[y * largura + x] = (iteracoes * 255) / max_iteracoes;
         }
     }
