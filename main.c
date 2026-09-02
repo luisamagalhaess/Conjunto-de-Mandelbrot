@@ -80,6 +80,52 @@ void *calcularBloco(void *arg) {
     return NULL;
 }
 
+int mandelbrotPthreads1(int *imagem, int largura, int altura, int max_iteracoes, int num_threads) {
+    pthread_t *threads = malloc(num_threads * sizeof(pthread_t));
+    DadosThread *dados = malloc(num_threads * sizeof(DadosThread));
+    if (threads == NULL || dados == NULL) {
+        free(threads);
+        free(dados);
+        return 0;
+    }
+
+    int linhas_por_thread = altura / num_threads;
+
+    for (int i = 0; i < num_threads; i++) {
+        dados[i].imagem = imagem;
+        dados[i].largura = largura;
+        dados[i].altura = altura;
+        dados[i].max_iteracoes = max_iteracoes;
+
+        dados[i].linha_inicio = i * linhas_por_thread;
+
+        if (i == num_threads - 1) {
+            dados[i].linha_fim = altura;
+        } else {
+            dados[i].linha_fim = (i + 1) * linhas_por_thread;
+        }
+
+        int erro = pthread_create(&threads[i], NULL, calcularBloco, &dados[i]);
+        if (erro != 0) {
+            for (int j = 0; j < i; j++) {
+                pthread_join(threads[j], NULL);
+            }
+            free(threads);
+            free(dados);
+            return 0;
+        }
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
+    free(threads);
+    free(dados);
+
+    return 1;
+}
+
 int salvarImagem(const char *nome_arquivo, int *imagem, int largura, int altura) {
     FILE *arquivo = fopen(nome_arquivo, "w");
     if (arquivo == NULL) {
