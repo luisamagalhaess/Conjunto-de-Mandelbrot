@@ -2,4 +2,6 @@ mandelbrot
 output/
 mandelbrot_lfm3_serial.pgm
 mandelbrot_lfm3_openmp.pgm
+mandelbrot_lfm3_pthreads1.pgm
+mandelbrot_lfm3_pthreads2.pgm
 times.txt
