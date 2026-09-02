@@ -4,11 +4,21 @@
 #include <stdlib.h>
 #include <time.h>
 #include <omp.h>
+#include <pthread.h>
 
 #define REAL_MIN -2.0
 #define REAL_MAX 1.0
 #define IMAG_MIN -1.5
 #define IMAG_MAX 1.5
+
+typedef struct {
+    int *imagem;
+    int largura;
+    int altura;
+    int max_iteracoes;
+    int linha_inicio;
+    int linha_fim;
+} DadosThread;
 
 void converterPixelParaComplexo(int x, int y, int largura, int altura, double *c_real, double *c_imag) {
     *c_real = REAL_MIN + ((double)x / (largura - 1)) * (REAL_MAX - REAL_MIN);

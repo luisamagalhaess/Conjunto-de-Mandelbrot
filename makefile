@@ -1,5 +1,5 @@
 mandelbrot:
-	gcc -Wall -Wextra -Wpedantic -std=c11 -fopenmp main.c -o mandelbrot
+	gcc -Wall -Wextra -Wpedantic -std=c11 -fopenmp -pthread main.c -o mandelbrot
 
 run:
 	./mandelbrot 800 600 1000 4
