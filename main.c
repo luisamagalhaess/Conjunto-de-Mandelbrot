@@ -20,6 +20,23 @@ typedef struct {
     int linha_fim;
 } DadosThread;
 
+typedef struct {
+    int *iteracoes;
+    int *imagem;
+    int inicio;
+    int fim;
+    int max_iteracoes;
+} DadosNormalizacao;
+
+void *normalizarBloco(void *arg) {
+    DadosNormalizacao *dados = (DadosNormalizacao *)arg;
+    for (int i = dados->inicio; i < dados->fim; i++) {
+        dados->imagem[i] = (dados->iteracoes[i] * 255) / dados->max_iteracoes;
+    }
+
+    return NULL;
+}
+
 void converterPixelParaComplexo(int x, int y, int largura, int altura, double *c_real, double *c_imag) {
     *c_real = REAL_MIN + ((double)x / (largura - 1)) * (REAL_MAX - REAL_MIN);
     *c_imag = IMAG_MIN + ((double)y / (altura - 1)) * (IMAG_MAX - IMAG_MIN);
@@ -120,6 +137,56 @@ int mandelbrotPthreads1(int *imagem, int largura, int altura, int max_iteracoes,
         pthread_join(threads[i], NULL);
     }
 
+    free(threads);
+    free(dados);
+
+    return 1;
+}
+
+void calcularImagemIteracoes(int *iteracoes, int largura, int altura, int max_iteracoes) {
+    for (int y = 0; y < altura; y++) {
+        for (int x = 0; x < largura; x++) {
+            iteracoes[y * largura + x] = calcularIteracoes(x, y, largura, altura, max_iteracoes);
+        }
+    }
+}
+
+int mandelbrotPthreads2(int *iteracoes, int *imagem, int total_pixels, int max_iteracoes, int num_threads) {
+    pthread_t *threads = malloc(num_threads * sizeof(pthread_t));
+    DadosNormalizacao *dados = malloc(num_threads * sizeof(DadosNormalizacao));
+    if (threads == NULL || dados == NULL) {
+        free(threads);
+        free(dados);
+        return 0;
+    }
+
+    int pixels_por_thread = total_pixels / num_threads;
+    for (int i = 0; i < num_threads; i++) {
+        dados[i].iteracoes = iteracoes;
+        dados[i].imagem = imagem;
+        dados[i].max_iteracoes = max_iteracoes;
+
+        dados[i].inicio = i * pixels_por_thread;
+
+        if (i == num_threads - 1) {
+            dados[i].fim = total_pixels;
+        } else {
+            dados[i].fim = (i + 1) * pixels_por_thread;
+        }
+        int erro = pthread_create(&threads[i], NULL, normalizarBloco, &dados[i]);
+        if (erro != 0) {
+            for (int j = 0; j < i; j++) {
+                pthread_join(threads[j], NULL);
+            }
+            free(threads);
+            free(dados);
+            return 0;
+        }
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+        pthread_join(threads[i], NULL);
+    }
     free(threads);
     free(dados);
 
@@ -244,6 +311,40 @@ int main(int argc, char *argv[]) {
     fprintf(arquivo_tempo, "Pthreads1: %.6f\n", tempo_pthreads1);
     fclose(arquivo_tempo);
 
+    int *iteracoes = malloc(total_pixels * sizeof(int));
+
+    if (iteracoes == NULL) {
+        fprintf(stderr, "Erro: falha na alocacao de memoria!\n");
+        free(imagem);
+        return 1;
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &inicio);
+    calcularImagemIteracoes(iteracoes, largura, altura, max_iteracoes);
+    if (!mandelbrotPthreads2(iteracoes, imagem, total_pixels, max_iteracoes, num_threads)) {
+        fprintf(stderr, "Erro: falha na execucao do Pthreads2!\n");
+        free(iteracoes);
+        free(imagem);
+        return 1;
+    }
+    clock_gettime(CLOCK_MONOTONIC, &fim);
+    double tempo_pthreads2 = calcularTempo(inicio, fim);
+    if (!salvarImagem("mandelbrot_lfm3_pthreads2.pgm", imagem, largura, altura)) {
+        fprintf(stderr, "Erro: nao foi possivel criar o arquivo Pthreads2!\n");
+        free(iteracoes);
+        free(imagem);
+        return 1;
+    }
+    arquivo_tempo = fopen("times.txt", "a");
+    if (arquivo_tempo == NULL) {
+        fprintf(stderr, "Erro: nao foi possivel abrir times.txt!\n");
+        free(iteracoes);
+        free(imagem);
+        return 1;
+    }
+    fprintf(arquivo_tempo, "Pthreads2: %.6f\n", tempo_pthreads2);
+    fclose(arquivo_tempo);
+    free(iteracoes);
     free(imagem);
 
     return 0;
