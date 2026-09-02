@@ -69,6 +69,17 @@ void mandelbrotOpenMP(int *imagem, int largura, int altura, int max_iteracoes, i
     }
 }
 
+void *calcularBloco(void *arg) {
+    DadosThread *dados = (DadosThread *)arg;
+    for (int y = dados->linha_inicio; y < dados->linha_fim; y++) {
+        for (int x = 0; x < dados->largura; x++) {
+            int iteracoes = calcularIteracoes(x, y, dados->largura, dados->altura, dados->max_iteracoes);
+            dados->imagem[y * dados->largura + x] = (iteracoes * 255) / dados->max_iteracoes;
+        }
+    }
+    return NULL;
+}
+
 int salvarImagem(const char *nome_arquivo, int *imagem, int largura, int altura) {
     FILE *arquivo = fopen(nome_arquivo, "w");
     if (arquivo == NULL) {
