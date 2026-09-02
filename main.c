@@ -220,6 +220,30 @@ int main(int argc, char *argv[]) {
     }
     fprintf(arquivo_tempo, "OpenMP: %.6f\n", tempo_openmp);
     fclose(arquivo_tempo);
+
+    clock_gettime(CLOCK_MONOTONIC, &inicio);
+    if (!mandelbrotPthreads1(imagem, largura, altura, max_iteracoes, num_threads)) {
+        fprintf(stderr, "Erro: falha na execucao do Pthreads1!\n");
+        free(imagem);
+        return 1;
+    }
+    clock_gettime(CLOCK_MONOTONIC, &fim);
+    double tempo_pthreads1 = calcularTempo(inicio, fim);
+    if (!salvarImagem("mandelbrot_lfm3_pthreads1.pgm", imagem, largura, altura)) {
+        fprintf(stderr, "Erro: nao foi possivel criar o arquivo Pthreads1!\n");
+        free(imagem);
+        return 1;
+    }
+
+    arquivo_tempo = fopen("times.txt", "a");
+    if (arquivo_tempo == NULL) {
+        fprintf(stderr, "Erro: nao foi possivel abrir times.txt!\n");
+        free(imagem);
+        return 1;
+    }
+    fprintf(arquivo_tempo, "Pthreads1: %.6f\n", tempo_pthreads1);
+    fclose(arquivo_tempo);
+
     free(imagem);
 
     return 0;
